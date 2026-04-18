@@ -2,7 +2,9 @@ name: Claude Code Warmup
 
 on:
   schedule:
-    - cron: '15 9 * * 1-5'
+    - cron: '0 4 * * 2-6'   # Tue–Sat, noon Malaysia
+    - cron: '30 23 * * 6'   # Sunday 7:30am Malaysia
+    - cron: '0 22 * * 0'    # Monday 6:00am Malaysia
   workflow_dispatch: {}
 
 concurrency:
