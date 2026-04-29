@@ -1,17 +1,14 @@
 name: Claude Code Warmup
-
 on:
   schedule:
-    - cron: '0 3 * * 2-6'   # Tue–Sat, noon Malaysia
+    - cron: '0 3 * * 2-6'   # Tue–Sat, 11am Malaysia
     - cron: '30 23 * * 6'   # Sunday 7:30am Malaysia
     - cron: '0 22 * * 0'    # Monday 6:00am Malaysia
     - cron: '0 6 * * 3'     # Wednesday 2pm Malaysia (weekly reset anchor)
   workflow_dispatch: {}
-
 concurrency:
   group: claude-warmup
   cancel-in-progress: true
-
 jobs:
   warmup:
     runs-on: ubuntu-latest
@@ -26,10 +23,8 @@ jobs:
             echo "Add it in Settings > Secrets and variables > Actions."
             exit 1
           fi
-
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
-
       - name: Ping Claude to anchor 5-hour window
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_OAUTH_TOKEN }}
@@ -42,24 +37,20 @@ jobs:
           status=$?
           set -e
           cat "$output_file"
-
           if [ $status -eq 0 ]; then
             echo "Claude warmup request succeeded."
             echo "✓ Warmup complete"
             exit 0
           fi
-
           if grep -Eiq "expired|unauthorized|invalid token|authentication|auth failed|login required|not logged in" "$output_file"; then
             echo "Claude token appears invalid or expired."
             echo "Run 'claude setup-token' locally and update the CLAUDE_OAUTH_TOKEN GitHub secret."
             exit 1
           fi
-
-          if grep -qi "rate limit" "$output_file"; then
-            echo "Claude reported a rate limit; treating as warmup success."
+          if grep -Eiq "rate limit|hit your limit|usage limit|over limit|over your limit" "$output_file"; then
+            echo "Claude reported a usage limit; treating as warmup success."
             echo "✓ Warmup complete"
             exit 0
           fi
-
           echo "Claude warmup failed with an unexpected error."
           exit $status
